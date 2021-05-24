@@ -13,7 +13,7 @@ const initLayout = [
     { i: 'b', x: 0, y: 0, w: 16, h: 1, isBounded: true },
     { i: 'c', x: 0, y: 5, w: 16, h: 8, isBounded: true },
 ];
-const LayoutLandScape = () => {
+const LayoutLandScape = ({urlVideo}) => {
     const refLayout = useRef();
     const [DeviceWidth, setDeviceWidth] = useState(1000);
     const [DeviceHeight, setDeviceHeight] = useState(1000);
@@ -30,8 +30,8 @@ const LayoutLandScape = () => {
         refLayout.current.childNodes[0].style.backgroundImage = `url(${urlImageTest})`;
 
         refLayout.current.childNodes[1].style.backgroundColor = "black"
-        refLayout.current.childNodes[1].innerHTML = `<video width='100%' height='100%' autoplay><source src="${urlvideoTest}" type='video/mp4'/></video>`
-    }, [refLayout])
+        refLayout.current.childNodes[1].innerHTML = `<video width='100%' height='100%' autoplay><source src="${urlVideo}" type='video/mp4'/></video>`
+    }, [refLayout, urlVideo])
 
     return (
         <div className="device-1">

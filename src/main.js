@@ -1,7 +1,9 @@
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, protocol } = require("electron");
 const { download } = require("electron-dl")
+const store = require("./store");
 const path = require('path');
 const isOnline = require('is-online');
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -13,17 +15,28 @@ function createWindow() {
     kiosk: true,
     frame: false,
     webPreferences: {
+      webSecurity: false,
       nodeIntegration: true,
       contextIsolation: false,
       preload: path.resolve(__dirname, 'preload.js')
     }
   })
   win.loadURL('http://localhost:3000');
-  // win.webContents.openDevTools();
+  win.webContents.openDevTools();
   win.removeMenu();
 }
 
 app.whenReady().then( async () => {
+
+  protocol.registerFileProtocol('file', (request, callback) => {
+    const pathname = request.url.replace('file:///', '');
+    callback(pathname);
+  });
+
+  //set store
+  console.log(app.getPath("userData"),'get path');
+
+  //create window
   await createWindow();
   const win = BrowserWindow.getFocusedWindow();
   
@@ -39,7 +52,7 @@ app.whenReady().then( async () => {
         console.log(res,'check');
       }).catch(() => {
         console.log("error");
-      })
+      });
 
       //process download
       if (state === 'interrupted') {
@@ -66,12 +79,39 @@ app.whenReady().then( async () => {
  
   ipcMain.on('download', async (event, { url, properties }) => {
     const win = BrowserWindow.getFocusedWindow();
+
+    properties.onCompleted = (res) => {
+      //send response to app.js
+      event.reply('getResDownload', res)
+    }
+    
     await download(win, url, properties);
+
   });
+
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow()
     }
+  });
+
+  //check store
+  ipcMain.on('getStore', async (event, properties) => {
+    console.log('get store hihi');
+    console.log(store.get("ads"),'get store');
+  });
+
+  //set store
+  ipcMain.on('setStore', async (event, dataAds) => {
+    store.set("ads",dataAds)
+  });
+
+  //update count ads every 5s
+  ipcMain.on('updateCount', async (event, properties) => {
+    let tempAds = store.get("ads");
+    console.log(tempAds.count,'check count ads');
+    tempAds.count = ++tempAds.count;
+    store.set("ads", tempAds);
   })
 })
 
